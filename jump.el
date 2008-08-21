@@ -1,51 +1,55 @@
-;;; jump.el --- jump between buffers
+;;; jump.el --- build functions for contextually jumping between files
 
-;;; Idea: to subsume ffip and toggle, which were both big influences
+;;; Components
 
-;;; TODO:
-
-;;: TODO:
-
-;; break this down into component parts, write unit tests, and test these parts
-
+;; - defjump (define functions which call jump-from and jump-to, and
+;;   pass the required arguments between them)
+;;   
 ;; - jump-from (takes either a string, a function, or t and
 ;;   returns the pieces to be passed to the jump-to function)
 ;; 
 ;; - jump-to (takes a string, or a function and the pieces passed from
-;;   the jump-to function and opens the related buffer)
+;;   the jump-to function and opens or creates the related buffer)
 ;;
-;; - jumper (the function which calls jump-from and jump-to, and
-;;   passed the required arguments between them)
-;;
-;; - for every set of rules (controller, model, etc...) return a
-;;   function defined by that rule set.  This seems to be the most
-;;   easy to bind/use
 
-;; things to keep
+;;; things to keep
 
 ;; - the idea of having a "root" (string or function)
 ;; - the ability to subsume ffip
 ;; - the bulk of rinari-jump "maybe with the addition of documentation
 ;;   string to rule sets"
 
+;;; TODO:
+
+;; - regexp for method
+
 ;;; Code:
 (require 'which-func)
-(require 'inflections) ;; try plural/singular versions by default
+(require 'findr)
+;; (require 'inflections) ;; TODO try plural/singular versions by default
 
 (defvar jump-ignore-file-regexp
   "\\\"\\(.*\\(git\\|svn\\|cvs\\).*\\|.*~\\|.*\\#.*\\#\\)\\\""
   "regexp for the find shell command to ignore undesirable files")
 
-(defvar jump-root
-  nil
-  "Set to a path to override the `jump-root' function.")
+(defvar jump-root nil "Set to a path to override the `jump-root' function.")
+
+(defvar jump-indicator-file ".git"
+  "File used to find the base of the current project.")
 
 (defun jump-root (&optional dir)
-  "Find the root of the project defined by presence of `.emacs-project'."
-  (file-name-directory (plv-find-project-file default-directory "")))
+  "Find the root of the project current project by searching up
+directories looking for the `jump-indicator-file'.  It is
+probably a good idea to override this function or to set either
+of the `jump-root' or `jump-indicator-file' variables."
+  (let ((f (expand-file-name jump-indicator-file dir))
+	(parent (file-truename (expand-file-name ".." dir))))
+    (cond ((string= dir parent) nil)
+	  ((file-exists-p f) (concat (or dir default-directory) "/"))
+	  (t (jump-root parent)))))
 
-(defcustom jump-method-command
-  'ruby-add-log-current-method
+(defvar jump-method-command
+  'which-function
   "Function used to determine the current function.  Defaults to
 `which-function', but others may be preferable, for example
 `ruby-add-log-current-method' is more reliable in ruby code.")
@@ -62,50 +66,46 @@ buffer."
 missing."
   (find-file path))
 
-(defun flatten (input)
-  (if input
-      (if (consp input)
-	  (append (flatten (car input))
-		  (flatten (cdr input)))
-	(list input))))
-
-(defun jump-recursive-directory-files (directory)
-  (split-string (shell-command-to-string
-		 (concat "find " directory " -type f -not -regex "
-			 jump-ignore-file-regexp))))
+(defun jump-uniqueify (file-cons)
+  "Set the car of the argument to include the directory name plus the file name."
+  (setcar file-cons
+	  (concat (car file-cons) " "
+		  (cadr (reverse (split-string (cdr file-cons) "/"))))))
 
 (defun jump-select-and-find-file (files)
-  "Select a single file from a list.  Return the path selected or
-nil if files was empty."
+  "Select a single file from an alist of file names and paths.
+Return the path selected or nil if files was empty."
   (let ((file   (case (length files)
 		  (0 nil)
-		  (1 (car files))
-		  (t (ido-completing-read "Jump to: " files)))))
-    (if file (find-file file))))
+		  (1 (caar files))
+		  (t (ido-completing-read "Jump to: "
+					  (mapcar 'car files))))))
+    (if file (find-file (cdr (assoc file files))))))
 
 (defun jump-to-file (&optional file)
   "Open the file located at file if file ends in a / then look in
 the related directory, and if file contains regexps then select
 from all matches."
   (interactive "Mfile: ")
-  (let ((default-directory (or jump-root
-			       (jump-root))))
-    (if (string-match "/$" file) ;; open directory
-	(ido-find-file-in-dir file)
-      (if (file-exists-p file) ;; open file
-	  (find-file file)
+  (let ((root (or jump-root (jump-root)))
+	(file-cons (cons (file-name-nondirectory file) file))
+	file-alist)
+    (if (string-match "/$" file)
+	(ido-find-file-in-dir (concat root "/" file)) ;; open directory
+      (if (file-exists-p file)
+	  (find-file file) ;; open file
 	(jump-select-and-find-file ;; open with regexp
-	 (let ((base (reverse (split-string file "/"))) dir matcher)
-	   (delete-dups
-	    (loop for subdir in base ;; for incrementally less directories
-		  do (setf matcher (car base)) (setf base (cdr base))
-		  (setf dir (concat (mapconcat 'identity (reverse base) "/") "/"))
-		  collect (delq nil
-				(mapcar ;; for all files under directory
-				 (lambda (el)
-				   (if (string-match matcher el) ;; match regexp
-				       (concat dir "/" el)))
-				 (jump-recursive-directory-files dir)))))))))))
+	 (mapcar (lambda (file)
+		   (let ((file-cons (cons (file-name-nondirectory file)
+					  (expand-file-name file))))
+		     (when (assoc (car file-cons) file-alist)
+		       (jump-uniqueify (assoc (car file-cons) file-alist))
+		       (jump-uniqueify file-cons))
+		     (add-to-list 'file-alist file-cons)
+		     file-cons))
+		 (findr (car file-cons)
+			(concat root "/" (or (file-name-directory
+					      (cdr file-cons)) "")))))))))
 
 (defun jump-to-method (&optional method)
   "If `jump-method' returns method in buffer, go to the first
@@ -115,15 +115,6 @@ line inside of method."
   (while (not (or (string-equal (jump-method) method)
 		  (and (> (forward-line 1) 0)
 		       (goto-char (point-min)))))))
-
-;; facade functions
-(defun jump-from (spec)
-  "jump from a spot"
-  )
-
-(defun jump-to (spec)
-  "jump to a spot"
-  )
 
 (defun jump-to-path (path)
   "Jump to the location specified by PATH (regexp allowed in
@@ -135,47 +126,86 @@ path).  If path ends in / then just look in that directory"
       (setf file (match-string 1 path)))
     (if (jump-to-file file)
 	(when method (jump-to-method method))
-      (message (format "no file found for %s" path)))))
+      (progn (message (format "no file found for %s" path)) nil))))
 
-;; ;;; old version
-;; (defun jump-to-path (path)
-;;   "Jump to the location specified by PATH (regexp allowed in
-;; path).  If path ends in / then just look in that directory"
-;;   (let ((default-directory (jump-root))
-;; 	method method-point)
-;;     (when (string-match "^\\(.*\\)#\\(.*\\)$" path)
-;;       (setf method (match-string 2 path))
-;;       (setf path (match-string 1 path)))
-;;     (if (if (string-match "/$" path) ;; open directory
-;; 	    (ido-find-file-in-dir path)
-;; 	  (if (file-exists-p path) ;; open file
-;; 	      (find-file path)
-;; 	    (let ((base (reverse (split-string path "/"))) ;; search with regexp
-;; 		  dir matcher files found-file)
-;; 	      (while (and (null found-file) (consp base))
-;; 		(setf matcher (car base)) (setf base (cdr base)) ;; drop down a dir
-;; 		(setf dir (concat (mapconcat 'identity (reverse base) "/") "/"))
-;; 		(setf files (delq nil (mapcar
-;; 				       (lambda (file) ;; check for matches to regexp
-;; 					 (if (string-match (concat "^" matcher) file)
-;; 					     file))
-;; 				       (directory-files dir))))
-;; 		(case (length files)
-;; 		  (0 )
-;; 		  (1 (setf found-file (car files)))
-;; 		  (t (setf found-file (ido-completing-read dir files)))))
-;; 	      (if found-file (find-file (concat dir found-file))))))
-;; 	(when method ;; if file was found, then find method
-;; 	  (goto-char (point-min))
-;; 	  (while (and (forward-line) (null method-point))
-;; 	    (if (string-match method (or (jump-method) ""))
-;; 		(setf method-point (point))))
-;; 	  (if method-point
-;; 	      (goto-char method-point)
-;; 	    (goto-char (point-min)))))))
+(defun jump-to (spec &optional matches make) ;; TODO maybe should build tests
+  "Jump to a spot defined by SPEC.  If optional argument MATCHES
+replace all '\\n' portions of SPEC with the nth (1 indexed)
+element of MATCHES.  If optiona argument MAKE, then create the
+target file if it doesn't exist, if MAKE is a function then use
+MAKE to create the target file."
+  (let ((root (or jump-root (jump-root)))
+	(path (if matches
+		  (let ((count 1) (new-spec spec) (spec nil))
+		    (while (not (equal spec new-spec))
+		      (setf spec new-spec)
+		      (setf new-spec
+			    (replace-regexp-in-string (format "\\\\%d" count)
+						      (nth (- count 1) matches)
+						      spec))
+		      (setf count (+ 1 count)))
+		    new-spec) spec)))
+    (unless (jump-to-path path)
+      (when make
+	(message "making the file")
+	(when (functionp make) (funcall (list make path)))
+	(find-file (concat root (if (string-match "^\\(.*\\)#" path)
+				    (match-string 1 path)
+				  path)))))))
 
-;; handle the jump
-(defun jumper ())
+(defun jump-from (spec) ;; TODO maybe should build tests
+  "Match SPEC to the current location returning a list of any matches"
+  (cond
+   ((stringp spec)
+    (let* ((file (or (and (buffer-file-name)
+			(expand-file-name (buffer-file-name)))
+		   (buffer-name)))
+	 (method (jump-method))
+	 (path (if (string-match "#.+" spec)
+		   (concat file "#" method)
+		 file)))
+    (and (string-match spec path)
+	 (or (let ((counter 1) mymatch matches)
+	       (while (setf mymatch (match-string counter path))
+		 (setf matches (cons mymatch matches))
+		 (setf counter (+ 1 counter)))
+	       (reverse matches))
+	     t))))
+   ((equal t spec) t)))
+
+(defun defjump (name specs &optional make doc)
+  "Define NAME as a function with behavior determined by SPECS.
+SPECS should be a list of cons cells of the form
+
+   (jump-from-regexp . jump-to-regexp)
+
+the resulting function NAME will then compare the
+jump-from-regexps against the current location using `jump-from'
+until one matches, at which point any resulting match
+information, along with the related jump-to-regexp will be passed
+to `jump-to' which will try to land in the correct buffer.
+
+Optional argument MAKE can be used to specify that missing files
+should be created.  If MAKE is a function then it will be called
+with the file path as it's only argument.  After possibly calling
+MAKE `find-file' will be used to open the path.
+
+Optional argument DOC specifies the documentation of the
+resulting function."
+  ;; function
+  (eval
+   `(defun ,name (create) ,(or doc "automatically created by `defjump'")
+      (interactive "P")
+      (let ((root (or jump-root (jump-root)))
+	    matches)
+	(loop ;; try every rule in mappings
+	 for spec in (quote ,specs)
+	 until (setf matches (jump-from (car spec)))
+	 finally ;; try to jump-to
+	 (cond
+	  ((equal t matches) (jump-to (cdr spec) nil (if create ,make)))
+	  ((consp matches) (jump-to (cdr spec) matches (if create ,make)))))))))
+
 
 (provide 'jump)
 ;;; jump.el ends here
