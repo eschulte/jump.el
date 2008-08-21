@@ -128,6 +128,18 @@ path).  If path ends in / then just look in that directory"
 	(when method (jump-to-method method))
       (progn (message (format "no file found for %s" path)) nil))))
 
+(defun jump-insert-matches (spec matches) ;; TODO maybe should build tests
+  (if matches
+      (let ((count 1) (new-spec spec) (spec nil))
+	(while (not (equal spec new-spec))
+	  (setf spec new-spec)
+	  (setf new-spec
+		(replace-regexp-in-string (format "\\\\%d" count)
+					  (nth (- count 1) matches)
+					  spec))
+	  (setf count (+ 1 count)))
+	new-spec) spec))
+
 (defun jump-to (spec &optional matches make) ;; TODO maybe should build tests
   "Jump to a spot defined by SPEC.  If optional argument MATCHES
 replace all '\\n' portions of SPEC with the nth (1 indexed)
@@ -135,16 +147,7 @@ element of MATCHES.  If optiona argument MAKE, then create the
 target file if it doesn't exist, if MAKE is a function then use
 MAKE to create the target file."
   (let ((root (or jump-root (jump-root)))
-	(path (if matches
-		  (let ((count 1) (new-spec spec) (spec nil))
-		    (while (not (equal spec new-spec))
-		      (setf spec new-spec)
-		      (setf new-spec
-			    (replace-regexp-in-string (format "\\\\%d" count)
-						      (nth (- count 1) matches)
-						      spec))
-		      (setf count (+ 1 count)))
-		    new-spec) spec)))
+	(path (jump-insert-matches spec matches)))
     (unless (jump-to-path path)
       (when make
 	(message "making the file")
@@ -173,7 +176,7 @@ MAKE to create the target file."
 	     t))))
    ((equal t spec) t)))
 
-(defun defjump (name specs &optional make doc)
+(defun defjump (name specs root &optional make doc)
   "Define NAME as a function with behavior determined by SPECS.
 SPECS should be a list of cons cells of the form
 
@@ -183,7 +186,10 @@ the resulting function NAME will then compare the
 jump-from-regexps against the current location using `jump-from'
 until one matches, at which point any resulting match
 information, along with the related jump-to-regexp will be passed
-to `jump-to' which will try to land in the correct buffer.
+to `jump-to' which will try to land in the correct buffer.  All
+regexps should be defined inside of a project rooted at ROOT
+which can either be a string directory path, or a function
+returning such a string.
 
 Optional argument MAKE can be used to specify that missing files
 should be created.  If MAKE is a function then it will be called
@@ -196,7 +202,7 @@ resulting function."
   (eval
    `(defun ,name (create) ,(or doc "automatically created by `defjump'")
       (interactive "P")
-      (let ((root (or jump-root (jump-root)))
+      (let ((root ,(if (functionp root) `(,root) root))
 	    matches)
 	(loop ;; try every rule in mappings
 	 for spec in (quote ,specs)
