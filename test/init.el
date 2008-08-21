@@ -13,9 +13,9 @@
 (defsuite jump-suite nil
   :setup-hook (lambda ()
 		(setq
-		 jump-root "~/projects/jump/test/jump-fake-app/"
+		 root "~/projects/jump/test/jump-fake-app/"
 		 default-directory "~/projects/jump/test/jump-fake-app/"
-		 jump-method-command 'ruby-add-log-current-method
+		 method-command 'ruby-add-log-current-method
 		 jump-method-placements
 		 '(("foods/pork.rb" "cook_stomach" 32)
 		   ("foods/pork.rb" "cook_butt" 69)
