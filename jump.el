@@ -67,7 +67,7 @@
 (require 'inflections)
 
 (defvar jump-ignore-file-regexp ;; TODO actually start using this
-  "\\\"\\(.*\\(git\\|svn\\|cvs\\).*\\|.*~\\|.*\\#.*\\#\\)\\\""
+  "\\(.*\\.\\(git\\|svn\\|cvs\\).*\\|.*~\\|.*\\#.*\\#\\)"
   "regexp for the find shell command to ignore undesirable files")
 
 (defun jump-method ()
@@ -93,6 +93,12 @@ Return the path selected or nil if files was empty."
 					  (mapcar 'car files))))))
     (if file (find-file (cdr (assoc file files))))))
 
+(defun jump-remove-unwanted-files (files)
+  (delete-if nil (mapcar (lambda (file)
+			   (unless (string-match jump-ignore-file-regexp file)
+			     file))
+			 files)))
+
 (defun jump-to-file (&optional file)
   "Open the file located at file if file ends in a / then look in
 the related directory, and if file contains regexps then select
@@ -100,22 +106,23 @@ from all matches."
   (interactive "Mfile: ")
   (let ((file-cons (cons (file-name-nondirectory file) file))
 	file-alist)
-    (if (string-match "/$" file)
+    (if (string-match "/$" file) ;; TODO: ensure that the directory exists
 	(ido-find-file-in-dir (concat root "/" file)) ;; open directory
       (if (file-exists-p file)
 	  (find-file file) ;; open file
 	(jump-select-and-find-file ;; open with regexp
-	 (mapcar (lambda (file)
-		   (let ((file-cons (cons (file-name-nondirectory file)
-					  (expand-file-name file))))
-		     (when (assoc (car file-cons) file-alist)
-		       (jump-uniqueify (assoc (car file-cons) file-alist))
-		       (jump-uniqueify file-cons))
-		     (add-to-list 'file-alist file-cons)
-		     file-cons))
-		 (findr (car file-cons)
-			(concat root "/" (or (file-name-directory
-					      (cdr file-cons)) "")))))))))
+	 (jump-remove-unwanted-files
+	  (mapcar (lambda (file)
+		    (let ((file-cons (cons (file-name-nondirectory file)
+					   (expand-file-name file))))
+		      (when (assoc (car file-cons) file-alist)
+			(jump-uniqueify (assoc (car file-cons) file-alist))
+			(jump-uniqueify file-cons))
+		      (add-to-list 'file-alist file-cons)
+		      file-cons))
+		  (findr (car file-cons)
+			 (concat root "/" (or (file-name-directory
+					       (cdr file-cons)) ""))))))))))
 
 (defun jump-to-method (&optional method)
   "If `jump-method' returns method in buffer, go to the first
@@ -215,6 +222,7 @@ MAKE to create the target file."
 		   (setf counter (+ 1 counter)))
 		 (reverse matches))
 	       t))))
+   ((functionp spec) (eval spec))
    ((equal t spec) t)))
 
 (defun defjump (name specs root &optional doc make method-command)
