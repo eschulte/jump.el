@@ -94,9 +94,9 @@ Return the path selected or nil if files was empty."
     (if file (find-file (cdr (assoc file files))))))
 
 (defun jump-remove-unwanted-files (files)
-  (delete-if nil (mapcar (lambda (file)
-			   (unless (string-match jump-ignore-file-regexp file)
-			     file))
+  (delete-if nil (mapcar (lambda (file-cons)
+			   (unless (string-match
+				    jump-ignore-file-regexp (cdr file-cons)) file-cons))
 			 files)))
 
 (defun jump-to-file (&optional file)
@@ -197,8 +197,8 @@ MAKE to create the target file."
   (let ((path (jump-insert-matches spec matches)))
     (unless (or (jump-to-path path) (and matches
 					 (jump-to-all-inflections spec matches)))
-      (progn (message (format "nope no file found for %s" path)) nil)
-      (when make (message "making the file")
+      (progn (message (format "no file found matching %s" path)) nil)
+      (when make (message (format "making %s" path))
 	    (when (functionp make) (eval (list make path)))
 	    (find-file (concat root (if (string-match "^\\(.*\\)#" path)
 					(match-string 1 path)
@@ -252,7 +252,7 @@ MAKE `find-file' will be used to open the path.
 Optional argument METHOD-COMMAND overrides the function used to
 find the current method which defaults to `which-function'."
   (eval
-   `(defun ,name (create) ,(concat doc "\n\nautomatically created by `defjump'")
+   `(defun ,name (&optional create) ,(concat doc "\n\nautomatically created by `defjump'")
       (interactive "P")
       (let ((root ,(if (functionp root) `(,root) root))
 	    (method-command (quote ,(or method-command 'which-function)))
