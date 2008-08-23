@@ -70,6 +70,18 @@
   "\\(.*\\.\\(git\\|svn\\|cvs\\).*\\|.*~\\|.*\\#.*\\#\\)"
   "regexp for the find shell command to ignore undesirable files")
 
+(defun jump-completing-read (prompt choices &optional predicate require-match initial-input hist def)
+  "if `ido-mode' is turned on use ido speedups completing the read"
+  (if ido-mode
+      (ido-completing-read prompt choices predicate require-match initial-input hist def)
+    (completing-read prompt choices predicate require-match initial-input hist def)))
+
+(defun jump-find-file-in-dir (dir)
+  "if `ido-mode' is turned on use ido speedups finding the file"
+  (if ido-mode
+      (ido-find-file-in-dir dir)
+    (let ((default-dir dir)) (find-file))))
+
 (defun jump-method ()
   "Return the method defined at the current position in current
 buffer."
@@ -89,8 +101,8 @@ Return the path selected or nil if files was empty."
   (let ((file   (case (length files)
 		  (0 nil)
 		  (1 (caar files))
-		  (t (ido-completing-read "Jump to: "
-					  (mapcar 'car files))))))
+		  (t (jump-completing-read "Jump to: "
+					   (mapcar 'car files))))))
     (if file (find-file (cdr (assoc file files))))))
 
 (defun jump-remove-unwanted-files (files)
@@ -107,7 +119,7 @@ from all matches."
   (let ((file-cons (cons (file-name-nondirectory file) file))
 	file-alist)
     (if (string-match "/$" file) ;; TODO: ensure that the directory exists
-	(ido-find-file-in-dir (concat root "/" file)) ;; open directory
+	(jump-find-file-in-dir (concat root "/" file)) ;; open directory
       (if (file-exists-p file)
 	  (find-file file) ;; open file
 	(jump-select-and-find-file ;; open with regexp
@@ -148,13 +160,14 @@ path).  If path ends in / then just look in that directory"
 	(when method (jump-to-method method) t))))
 
 (defun jump-insert-matches (spec matches)
+  (message (format "%S" (cons spec matches)))
   (if matches
       (let ((count 1) (new-spec spec) (spec nil))
 	(while (not (equal spec new-spec))
 	  (setf spec new-spec)
 	  (setf new-spec
 		(replace-regexp-in-string (format "\\\\%d" count)
-					  (nth (- count 1) matches)
+					  (or (nth (- count 1) matches) ".*?")
 					  spec))
 	  (setf count (+ 1 count)))
 	new-spec) spec))
@@ -194,36 +207,36 @@ replace all '\\n' portions of SPEC with the nth (1 indexed)
 element of MATCHES.  If optiona argument MAKE, then create the
 target file if it doesn't exist, if MAKE is a function then use
 MAKE to create the target file."
-  (let ((path (jump-insert-matches spec matches)))
-    (unless (or (jump-to-path path) (and matches
-					 (jump-to-all-inflections spec matches)))
-      (progn (message (format "no file found matching %s" path)) nil)
-      (when make (message (format "making %s" path))
-	    (when (functionp make) (eval (list make path)))
-	    (find-file (concat root (if (string-match "^\\(.*\\)#" path)
-					(match-string 1 path)
-				      path)))))))
+  (if (functionp spec) (eval (list spec matches)) ;; custom function in spec
+    (let ((path (jump-insert-matches spec matches)))
+      (unless (or (jump-to-path path) (and matches
+					   (jump-to-all-inflections spec matches)))
+	(progn (message (format "no file found matching %s" path)) nil)
+	(when make (message (format "making %s" path))
+	      (when (functionp make) (eval (list make path)))
+	      (find-file (concat root (if (string-match "^\\(.*\\)#" path)
+					  (match-string 1 path)
+					path))))))))
 
 (defun jump-from (spec)
   "Match SPEC to the current location returning a list of any matches"
-  (cond
-   ((stringp spec)
-    (let* ((file (or (and (buffer-file-name)
-			  (expand-file-name (buffer-file-name)))
-		     (buffer-name)))
-	   (method (jump-method))
-	   (path (if (string-match "#.+" spec)
-		     (concat file "#" method)
-		   file)))
-      (and (string-match spec path)
-	   (or (let ((counter 1) mymatch matches)
-		 (while (setf mymatch (match-string counter path))
-		   (setf matches (cons mymatch matches))
-		   (setf counter (+ 1 counter)))
-		 (reverse matches))
-	       t))))
-   ((functionp spec) (eval spec))
-   ((equal t spec) t)))
+  (cond ((stringp spec)
+	 (let* ((file (or (and (buffer-file-name)
+			       (expand-file-name (buffer-file-name)))
+			  (buffer-name)))
+		(method (jump-method))
+		(path (if (string-match "#.+" spec)
+			  (concat file "#" method)
+			file)))
+	   (and (string-match spec path)
+		(or (let ((counter 1) mymatch matches)
+		      (while (setf mymatch (match-string counter path))
+			(setf matches (cons mymatch matches))
+			(setf counter (+ 1 counter)))
+		      (reverse matches)) t))))
+	((functionp spec) (eval (list spec)))
+	((equal t spec) t)
+	(t (message (format "unrecognized jump-from specification format %s")))))
 
 (defun defjump (name specs root &optional doc make method-command)
   "Define NAME as a function with behavior determined by SPECS.

@@ -95,30 +95,12 @@
 	      (apply 'jump-to-path-and-check el))
 	    jump-full-paths)))
 
-;; (deftest jump-to-path-test jump-suite
-;;   ;; test moving from everywhere to everywhere
-;;   (save-excursion
-;;     (unless (y-or-n-p "allways select the first option ok? ")
-;;       (error "if you won't co-operate, I won't run these tests"))
-;;     (cd "./jump-fake-app")
-;;     (flet ((jump-root () "~/projects/jump/test/jump-fake-app/")
-;; 	   (jump-method () (ruby-add-log-current-method))
-;; 	   (jumpit (path end)
-;; 		   ;; go there
-;; 		   (jump-to-path path)
-;; 		   ;; assert where there is
-;; 		   (message (format "asserting at %S" end))
-;; 		   (assert-equal (file-name-nondirectory (car end))
-;; 				 (file-name-nondirectory (buffer-file-name)))
-;; 		   (assert-equal (cdr end) (point))
-;; 		   ;; clean up
-;; 		   (kill-buffer (file-name-nondirectory (car end)))))
-;;       (jumpit "animals/.*" '("chicken.rb" . 1))
-;;       (jumpit "animals/pig.rb#stomach" '("pig.rb" . 28))
-;;       ;; - failing this test because it needs to start looking from the jump-root
-;;       ;; - also, needs to gracefully fail (return nil) when nothing matches the regexp
-;;       (jumpit ".*pork.rb#cook_butt" '("pork.rb" . 69))
-;;       )))
+(deftest jump-from-function-test jump-suite
+  (message "testing jumping from a function specification")
+  (assert-equal
+   (jump-from (lambda ()
+	       '("pork")))
+   '("pork")))
 
 ;;--------------------------------------------------------------------------------
 ;; run tests
