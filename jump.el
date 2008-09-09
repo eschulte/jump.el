@@ -66,13 +66,6 @@
 (require 'findr)
 (require 'inflections)
 
-(defvar jump-path-separator
-  (if (or (equal system-type 'ms-dos)
-	 (equal system-type 'windows-nt))
-      "\\"
-    "/")
-  "OS specific path separator")
-
 (defvar jump-ignore-file-regexp ;; TODO actually start using this
   "\\(.*\\.\\(git\\|svn\\|cvs\\).*\\|.*~\\|.*\\#.*\\#\\)"
   "regexp for the find shell command to ignore undesirable files")
@@ -100,7 +93,7 @@ buffer."
   "Set the car of the argument to include the directory name plus the file name."
   (setcar file-cons
 	  (concat (car file-cons) " "
-		  (cadr (reverse (split-string (cdr file-cons) jump-path-separator))))))
+		  (cadr (reverse (split-string (cdr file-cons) "/"))))))
 
 (defun jump-select-and-find-file (files)
   "Select a single file from an alist of file names and paths.
@@ -119,14 +112,13 @@ Return the path selected or nil if files was empty."
 			 files)))
 
 (defun jump-to-file (&optional file)
-  "Open the file located at file if file ends in a
-`jump-path-separator' then look in the related directory, and if
-file contains regexps then select from all matches."
+  "Open the file located at file if file ends in a / then look in
+the related directory, and if file contains regexps then select
+from all matches."
   (interactive "Mfile: ")
   (let ((file-cons (cons (file-name-nondirectory file) file))
 	file-alist)
-    (if (string-match (format "%s$" ;; TODO: ensure that the directory exists
-			      jump-path-separator) file)
+    (if (string-match "/$" file) ;; TODO: ensure that the directory exists
 	(jump-find-file-in-dir (expand-file-name file root)) ;; open directory
       (if (file-exists-p file)
 	  (find-file file) ;; open file
@@ -158,8 +150,7 @@ line inside of method."
 
 (defun jump-to-path (path)
   "Jump to the location specified by PATH (regexp allowed in
-path).  If path ends in `jump-path-separator' then just look in
-that directory"
+path).  If path ends in / then just look in that directory"
   (let ((file path)
 	method)
     (when (string-match "^\\(.*\\)#\\(.*\\)$" path)
