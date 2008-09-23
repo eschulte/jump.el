@@ -209,14 +209,16 @@ target file if it doesn't exist, if MAKE is a function then use
 MAKE to create the target file."
   (if (functionp spec) (eval (list spec matches)) ;; custom function in spec
     (let ((path (jump-insert-matches spec matches)))
-      (unless (or (jump-to-path path) (and matches
-					   (jump-to-all-inflections spec matches)))
-	(progn (message (format "no file found matching %s" path)) nil)
+      (unless (or (jump-to-path path)
+		  (and matches (jump-to-all-inflections spec matches)))
 	(when make (message (format "making %s" path))
-	      (when (functionp make) (eval (list make path)))
-	      (find-file (concat root (if (string-match "^\\(.*\\)#" path)
-					  (match-string 1 path)
-					path))))))))
+	      (let ((path (if (or (string-match "^\\(.*?\\)\\(\\\\\\.\\)*\\.\\*" path)
+				  (string-match "^\\(.*/\\)$" path))
+			      (read-from-minibuffer "create " (match-string 1 path))
+			    path)))
+		(when (functionp make) (eval (list make path)))
+		(find-file (concat root (if (string-match "^\\(.*\\)#" path)
+					    (match-string 1 path) path)))))))))
 
 (defun jump-from (spec)
   "Match SPEC to the current location returning a list of any matches"
