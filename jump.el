@@ -212,7 +212,7 @@ MAKE to create the target file."
       (unless (or (jump-to-path path)
 		  (and matches (jump-to-all-inflections spec matches)))
 	(when make (message (format "making %s" path))
-	      (let ((path (if (or (string-match "^\\(.*?\\)\\(\\\\\\.\\)*\\.\\*" path)
+	      (let ((path (if (or (string-match "^\\(.*?\\)\\.\\*" path)
 				  (string-match "^\\(.*/\\)$" path))
 			      (read-from-minibuffer "create " (match-string 1 path))
 			    path)))
