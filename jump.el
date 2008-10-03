@@ -277,7 +277,7 @@ find the current method which defaults to `which-function'."
 			      (lambda (spec)
 				(if (stringp (car spec))
 				    (cons (replace-regexp-in-string
-					   "\\\\[[:digit:]]+" "\\\\(.*\\\\)"
+					   "\\\\[[:digit:]]+" "\\\\(.*?\\\\)"
 					   (car spec)) (cdr spec))
 				  spec))
 			      specs))
