@@ -78,7 +78,7 @@
 
 (defun jump-find-file-in-dir (dir)
   "if `ido-mode' is turned on use ido speedups finding the file"
-  (if ido-mode
+  (if (or (equal ido-mode 'file) (equal ido-mode 'both))
       (ido-find-file-in-dir dir)
     (let ((default-dir dir)) (find-file))))
 
@@ -146,7 +146,9 @@ line inside of method."
 		      (or (string-equal (jump-method) method)
 			  (and (> (forward-line 1) 0)
 			       (goto-char (point-min)))))))
-    (unless (equal results 1) t)))
+    (unless (equal results 1)
+      (if (commandp 'recenter-top-bottom) (recenter-top-bottom))
+      t)))
 
 (defun jump-to-path (path)
   "Jump to the location specified by PATH (regexp allowed in
