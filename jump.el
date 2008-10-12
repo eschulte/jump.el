@@ -80,7 +80,9 @@
   "if `ido-mode' is turned on use ido speedups finding the file"
   (if (or (equal ido-mode 'file) (equal ido-mode 'both))
       (ido-find-file-in-dir dir)
-    (let ((default-dir dir)) (find-file))))
+    (let ((default-dir dir))
+      (message (format "not ido %s" ido-mode))
+      (call-interactively 'find-file))))
 
 (defun jump-method ()
   "Return the method defined at the current position in current
