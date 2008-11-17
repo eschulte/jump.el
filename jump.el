@@ -206,7 +206,7 @@ path).  If path ends in / then just look in that directory"
 (defun jump-to (spec &optional matches make)
   "Jump to a spot defined by SPEC.  If optional argument MATCHES
 replace all '\\n' portions of SPEC with the nth (1 indexed)
-element of MATCHES.  If optiona argument MAKE, then create the
+element of MATCHES.  If optional argument MAKE, then create the
 target file if it doesn't exist, if MAKE is a function then use
 MAKE to create the target file."
   (if (functionp spec) (eval (list spec matches)) ;; custom function in spec
@@ -283,12 +283,16 @@ find the current method which defaults to `which-function'."
 					   (car spec)) (cdr spec))
 				  spec))
 			      specs))
-	 until (setf matches (jump-from (car spec)))
-	 finally (cond
-		  ((equal t matches)
-		   (jump-to (cdr spec) nil (if create (quote ,make))))
-		  ((consp matches)
-		   (jump-to (cdr spec) matches (if create (quote ,make))))))))))
+	 ;; don't stop until both the front and the back match
+	 ;;
+	 ;; the back should match if the user is presented with a list
+	 ;; of files, or a single file is jumped to
+	 until (and (setf matches (jump-from (car spec)))
+		    (cond
+		     ((equal t matches)
+		      (jump-to (cdr spec) nil (if create (quote ,make))))
+		     ((consp matches)
+		      (jump-to (cdr spec) matches (if create (quote ,make)))))))))))
 
 (provide 'jump)
 ;;; jump.el ends here
