@@ -147,8 +147,9 @@ line inside of method."
 			  (and (> (forward-line 1) 0)
 			       (goto-char (point-min)))))))
     (unless (equal results 1)
-      (if (commandp 'recenter-top-bottom) (recenter-top-bottom))
-      t)))
+      (when (commandp 'recenter-top-bottom)
+	  (recenter-top-bottom))))
+  t)
 
 (defun jump-to-path (path)
   "Jump to the location specified by PATH (regexp allowed in
@@ -159,7 +160,10 @@ path).  If path ends in / then just look in that directory"
       (setf method (match-string 2 path))
       (setf file (match-string 1 path)))
     (if (jump-to-file file) ;; returns t as long as a file was found
-	(when method (jump-to-method method) t))))
+	(progn (when method
+		 (jump-to-method method))
+	       t)
+      nil)))
 
 (defun jump-insert-matches (spec matches)
   (message (format "%S" (cons spec matches)))
@@ -211,8 +215,9 @@ target file if it doesn't exist, if MAKE is a function then use
 MAKE to create the target file."
   (if (functionp spec) (eval (list spec matches)) ;; custom function in spec
     (let ((path (jump-insert-matches spec matches)))
-      (unless (or (jump-to-path path)
-		  (and matches (jump-to-all-inflections spec matches)))
+      (if (or (jump-to-path path)
+	      (and matches (jump-to-all-inflections spec matches)))
+	  t
 	(when make (message (format "making %s" path))
 	      (let ((path (if (or (string-match "^\\(.*?\\)\\.\\*" path)
 				  (string-match "^\\(.*/\\)$" path))
