@@ -118,7 +118,7 @@ from all matches."
   (interactive "Mfile: ")
   (let ((file-cons (cons (file-name-nondirectory file) file))
 	file-alist)
-    (if (string-match "/$" file) ;; TODO: ensure that the directory exists
+    (if (and (equal (file-name-directory file) file) (file-exists-p file))
 	(jump-find-file-in-dir (expand-file-name file root)) ;; open directory
       (if (file-exists-p file)
 	  (find-file file) ;; open file
@@ -146,11 +146,8 @@ line inside of method."
 		      (or (string-equal (jump-method) method)
 			  (and (> (forward-line 1) 0)
 			       (goto-char (point-min)))))))
-    (unless (equal results 1)
-      (when (commandp 'recenter-top-bottom)
-	  (recenter-top-bottom))))
-  t)
-
+    (when (and (commandp 'recenter-top-bottom) (not (equal results 1))) (recenter-top-bottom))))
+  
 (defun jump-to-path (path)
   "Jump to the location specified by PATH (regexp allowed in
 path).  If path ends in / then just look in that directory"
@@ -159,14 +156,11 @@ path).  If path ends in / then just look in that directory"
     (when (string-match "^\\(.*\\)#\\(.*\\)$" path)
       (setf method (match-string 2 path))
       (setf file (match-string 1 path)))
-    (if (jump-to-file file) ;; returns t as long as a file was found
-	(progn (when method
-		 (jump-to-method method))
-	       t)
-      nil)))
+    (when (jump-to-file file) ;; returns t as long as a file was found
+      (when method (jump-to-method method))
+      t)))
 
 (defun jump-insert-matches (spec matches)
-  (message (format "%S" (cons spec matches)))
   (if matches
       (let ((count 1) (new-spec spec) (spec nil))
 	(while (not (equal spec new-spec))
@@ -215,17 +209,17 @@ target file if it doesn't exist, if MAKE is a function then use
 MAKE to create the target file."
   (if (functionp spec) (eval (list spec matches)) ;; custom function in spec
     (let ((path (jump-insert-matches spec matches)))
-      (if (or (jump-to-path path)
-	      (and matches (jump-to-all-inflections spec matches)))
-	  t
-	(when make (message (format "making %s" path))
+      (if (not (or (jump-to-path path)
+		   (and matches (jump-to-all-inflections spec matches))))
+	  (when make (message (format "making %s" path))
 	      (let ((path (if (or (string-match "^\\(.*?\\)\\.\\*" path)
 				  (string-match "^\\(.*/\\)$" path))
 			      (read-from-minibuffer "create " (match-string 1 path))
 			    path)))
 		(when (functionp make) (eval (list make path)))
 		(find-file (concat root (if (string-match "^\\(.*\\)#" path)
-					    (match-string 1 path) path)))))))))
+					    (match-string 1 path) path)))))
+	t))))
 
 (defun jump-from (spec)
   "Match SPEC to the current location returning a list of any matches"
