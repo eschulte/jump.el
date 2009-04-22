@@ -64,6 +64,8 @@
 ;;   'ruby-add-log-current-method)
 
 ;;; Code:
+(if (featurep 'xemacs)
+    (add-to-list 'load-path (file-name-as-directory (or load-file-name buffer-file-name))))
 (require 'which-func)
 (require 'findr)
 (require 'inflections)
