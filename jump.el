@@ -76,7 +76,9 @@
   "if `ido-mode' is turned on use ido speedups completing the read"
   (if ido-mode
       (ido-completing-read prompt choices predicate require-match initial-input hist def)
-    (completing-read prompt choices predicate require-match initial-input hist def)))
+    (if (featurep 'xemacs)
+        (completing-read prompt (mapcar 'list choices) predicate require-match initial-input hist def)
+      (completing-read prompt choices predicate require-match initial-input hist def))))
 
 (defun jump-find-file-in-dir (dir)
   "if `ido-mode' is turned on use ido speedups finding the file"
@@ -280,10 +282,15 @@ find the current method which defaults to `which-function'."
 	 for spec in (quote ,(mapcar
 			      (lambda (spec)
 				(if (stringp (car spec))
-				    (cons (replace-regexp-in-string
-					   "\\\\[[:digit:]]+" "\\\\(.*?\\\\)"
-					   (car spec)) (cdr spec))
-				  spec))
+				    ;;xemacs did not understand :digit: class
+				    (if (featurep 'xemacs)
+					(cons (replace-regexp-in-string
+					       "\\\\[0-9]+" "\\\\(.*?\\\\)"
+					       (car spec)) (cdr spec))
+                                      (cons (replace-regexp-in-string
+                                             "\\\\[[:digit:]]+" "\\\\(.*?\\\\)"
+                                             (car spec)) (cdr spec)))
+                                  spec))
 			      specs))
 	 ;; don't stop until both the front and the back match
 	 ;;
