@@ -1,4 +1,4 @@
-;;; findr.el -- Breadth-first file-finding facility for (X)Emacs
+;;; findr.el --- Breadth-first file-finding facility for (X)Emacs
 ;;  Dec 1, 2006
 
 ;; Copyright (C) 1999 Free Software Foundation, Inc.

@@ -7,8 +7,7 @@
 ;; Version: 2.0
 ;; Created: 2008-08-21
 ;; Keywords: project, convenience, navigation
-;; Package-Requires: ((findr "0.7")
-;;                    (inflections "1.0"))
+;; Package-Requires: ((findr "0.7") (inflections "1.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -165,7 +164,7 @@ line inside of method."
 			  (and (> (forward-line 1) 0)
 			       (goto-char (point-min)))))))
     (when (and (commandp 'recenter-top-bottom) (not (equal results 1))) (recenter-top-bottom))))
-  
+
 (defun jump-to-path (path)
   "Jump to the location specified by PATH (regexp allowed in
 path).  If path ends in / then just look in that directory"
