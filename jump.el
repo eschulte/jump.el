@@ -256,7 +256,7 @@ MAKE to create the target file."
 		      (reverse matches)) t))))
 	((functionp spec) (eval (list spec)))
 	((equal t spec) t)
-	(t (message (format "unrecognized jump-from specification format %s")))))
+	(t (message (format "unrecognized jump-from specification format %s" spec)))))
 
 ;;;###autoload
 (defmacro defjump (name specs root &optional doc make method-command)
