@@ -27,12 +27,11 @@
 ;; Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 ;;; Code:
-(eval-when-compile
-  (require 'cl)
-  (defvar inflection-singulars    nil)
-  (defvar inflection-plurals      nil)
-  (defvar inflection-irregulars   nil)
-  (defvar inflection-uncountables nil))
+(require 'cl)
+(defvar inflection-singulars    nil)
+(defvar inflection-plurals      nil)
+(defvar inflection-irregulars   nil)
+(defvar inflection-uncountables nil)
 
 (defmacro define-inflectors (&rest specs)
   (loop for (type . rest) in specs do
