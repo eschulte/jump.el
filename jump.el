@@ -288,7 +288,7 @@ find the current method which defaults to `which-function'."
   `(defun ,name (&optional create)
      ,(concat doc "\n\nautomatically created by `defjump'")
      (interactive "P")
-     (let ((root ,(if (functionp root) (root) root))
+     (let ((root ,(if (functionp root) `(,root) root))
 	   (method-command ,(or method-command 'which-function))
 	   matches)
        (loop ;; try every rule in mappings
