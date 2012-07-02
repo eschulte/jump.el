@@ -28,10 +28,11 @@
 
 ;;; Code:
 (require 'cl)
-(defvar inflection-singulars    nil)
-(defvar inflection-plurals      nil)
-(defvar inflection-irregulars   nil)
-(defvar inflection-uncountables nil)
+(eval-and-compile
+  (defvar inflection-singulars    nil)
+  (defvar inflection-plurals      nil)
+  (defvar inflection-irregulars   nil)
+  (defvar inflection-uncountables nil))
 
 (defmacro define-inflectors (&rest specs)
   (loop for (type . rest) in specs do
