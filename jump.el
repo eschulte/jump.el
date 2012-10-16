@@ -317,5 +317,9 @@ find the current method which defaults to `which-function'."
 	      ((consp matches)
 	       (jump-to (cdr spec) matches (when create ,make)))))))))
 
+;; Local Variables:
+;; byte-compile-warnings: (not cl-functions)
+;; End:
+
 (provide 'jump)
 ;;; jump.el ends here
