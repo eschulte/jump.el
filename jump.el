@@ -7,7 +7,7 @@
 ;; Version: DEV
 ;; Created: 2008-08-21
 ;; Keywords: project, convenience, navigation
-;; Package-Requires: ((findr "0.7") (inflections "1.0"))
+;; Package-Requires: ((findr "0.7") (inflections "1.1"))
 
 ;; This file is NOT part of GNU Emacs.
 

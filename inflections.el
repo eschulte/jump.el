@@ -4,7 +4,7 @@
 
 ;; Authors: Dmitry Galinsky, Howard Yeh
 ;; URL: http://emacs-rails.rubyforge.org/svn/trunk/inflections.el
-;; Version: 1.0
+;; Version: 1.1
 ;; Created: 2007-11-02
 ;; Keywords: ruby rails languages oop
 
