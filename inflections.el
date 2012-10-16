@@ -149,4 +149,8 @@
               when plurals do (return plurals))
         str)))
 
+;; Local Variables:
+;; byte-compile-warnings: (not cl-functions)
+;; End:
+
 (provide 'inflections)
