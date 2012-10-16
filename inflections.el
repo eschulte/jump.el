@@ -2,8 +2,8 @@
 
 ;; Copyright (C) 2006 Dmitry Galinsky <dima dot exe at gmail dot com>
 
-;; Authors: Dmitry Galinsky, Howard Yeh
-;; URL: http://emacs-rails.rubyforge.org/svn/trunk/inflections.el
+;; Author: Dmitry Galinsky, Howard Yeh
+;; URL: https://github.com/eschulte/jump.el
 ;; Version: 1.1
 ;; Created: 2007-11-02
 ;; Keywords: ruby rails languages oop
@@ -154,3 +154,4 @@
 ;; End:
 
 (provide 'inflections)
+;;; inflections.el ends here
