@@ -1,7 +1,6 @@
-(cd (file-name-directory (or load-file-name buffer-file-name)))
-(add-to-list 'load-path "../")
-(add-to-list 'load-path "./")
-(add-to-list 'load-path "~/emacs/elisp/ruby/")
+(setq this-dir (file-name-directory (or load-file-name buffer-file-name)))
+(add-to-list 'load-path (expand-file-name ".." this-dir))
+(add-to-list 'load-path this-dir)
 (require 'jump)
 (require 'elunit)
 (require 'ido)
@@ -13,8 +12,8 @@
 (defsuite jump-suite nil
   :setup-hook (lambda ()
 		(setq
-		 root "~/projects/jump/test/jump-fake-app/"
-		 default-directory "~/projects/jump/test/jump-fake-app/"
+		 root (expand-file-name "jump-fake-app/" this-dir)
+		 default-directory (expand-file-name "jump-fake-app/" this-dir)
 		 method-command 'ruby-add-log-current-method
 		 jump-method-placements
 		 '(("foods/pork.rb" "cook_stomach" 32)
