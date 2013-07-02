@@ -110,7 +110,9 @@ Return the path selected or nil if FILES was empty."
 		  (0 nil)
 		  (1 (caar files))
 		  (t (jump-completing-read "Jump to: "
-					   (mapcar 'car files))))))
+					   (mapcar 'car files)
+                                           nil
+                                           t)))))
     (when file
       (let ((path (cdr (assoc file files))))
         (if path
