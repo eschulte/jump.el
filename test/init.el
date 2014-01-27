@@ -44,7 +44,7 @@
 ;; tests
 (deftest jump-to-file-test jump-suite ;; test failing but method seems to work
   (message "testing that jump-to-file lands in the correct file")
-  (flet ((check-file-after-jump (file regexp)
+  (cl-flet ((check-file-after-jump (file regexp)
 			      (message (format "%s =~ %s" file regexp))
 			      (jump-to-file regexp)
 			      (assert-equal
@@ -59,7 +59,7 @@
 
 (deftest jump-method-test jump-suite
   (message "testing that jump-method returns the correct method")
-  (flet ((check-method-at-place (file method target)
+  (cl-flet ((check-method-at-place (file method target)
 				(find-file file)
 				(goto-char target)
 				(assert-equal (jump-method) method)
@@ -71,7 +71,7 @@
 
 (deftest jump-to-method-test jump-suite
   (message "testing jump-to-method")
-  (flet ((jump-and-check (file method target)
+  (cl-flet ((jump-and-check (file method target)
 			 (find-file file)
 			 (jump-to-method method)
 			 (assert-equal target (point))
@@ -83,7 +83,7 @@
 
 (deftest jump-to-path-test jump-suite
   (message "testing jump-to-path")
-  (flet ((jump-to-path-and-check (path file target)
+  (cl-flet ((jump-to-path-and-check (path file target)
 				 (jump-to-path path)
 				 (assert-equal
 				  (file-name-nondirectory buffer-file-name)
