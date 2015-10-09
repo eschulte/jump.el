@@ -295,7 +295,7 @@ find the current method which defaults to `which-function'."
      ,(concat doc "\n\nautomatically created by `defjump'")
      (interactive "P")
      (let ((root ,(if (functionp root) `(,root) root))
-	   (method-command ,(or method-command 'which-function))
+	   (method-command ,(or method-command '(quote which-function)))
 	   matches)
        (loop ;; try every rule in mappings
 	for spec in (quote ,(mapcar
