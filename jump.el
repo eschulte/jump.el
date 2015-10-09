@@ -42,17 +42,17 @@
 ;;; Example: (jumping to the related model in a rails application)
 
 ;; (defjump
-;;   'rinari-find-model
-;;   '(("app/controllers/\\1_controller.rb#\\2"  . "app/models/\\1.rb#\\2")
-;;     ("app/views/\\1/.*"                       . "app/models/\\1.rb")
-;;     ("app/helpers/\\1_helper.rb"              . "app/models/\\1.rb")
-;;     ("db/migrate/.*create_\\1.rb"             . "app/models/\\1.rb")
-;;     ("test/functional/\\1_controller_test.rb" . "app/models/\\1.rb")
-;;     ("test/unit/\\1_test.rb#test_\\2"         . "app/models/\\1.rb#\\2")
-;;     ("test/unit/\\1_test.rb"                  . "app/models/\\1.rb")
-;;     ("test/fixtures/\\1.yml"                  . "app/models/\\1.rb")
-;;     (t                                        . "app/models/"))
-;;   'rinari-root
+;;   rinari-find-model
+;;   (("app/controllers/\\1_controller.rb#\\2"  . "app/models/\\1.rb#\\2")
+;;    ("app/views/\\1/.*"                       . "app/models/\\1.rb")
+;;    ("app/helpers/\\1_helper.rb"              . "app/models/\\1.rb")
+;;    ("db/migrate/.*create_\\1.rb"             . "app/models/\\1.rb")
+;;    ("test/functional/\\1_controller_test.rb" . "app/models/\\1.rb")
+;;    ("test/unit/\\1_test.rb#test_\\2"         . "app/models/\\1.rb#\\2")
+;;    ("test/unit/\\1_test.rb"                  . "app/models/\\1.rb")
+;;    ("test/fixtures/\\1.yml"                  . "app/models/\\1.rb")
+;;    (t                                        . "app/models/"))
+;;   rinari-root
 ;;   "Go to the most logical model given the current location."
 ;;   '(lambda (path)
 ;;      (message (shell-command-to-string
