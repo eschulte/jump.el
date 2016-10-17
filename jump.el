@@ -7,7 +7,7 @@
 ;; Version: DEV
 ;; Created: 2008-08-21
 ;; Keywords: project, convenience, navigation
-;; Package-Requires: ((findr "0.7") (inflections "1.1"))
+;; Package-Requires: ((findr "0.7") (inflections "2.4"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -200,8 +200,8 @@ path).  If path ends in / then just look in that directory"
   (let ((terms (mapcar
 		(lambda (term)
 		  (delete-dups (list term
-				     (singularize-string term)
-				     (pluralize-string term))))
+				     (inflection-singularize-string term)
+				     (inflection-pluralize-string term))))
 		terms))
 	results interum-results)
     (dolist (group terms)

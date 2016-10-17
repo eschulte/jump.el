@@ -45,7 +45,7 @@
                            (:uncountable `(setf inflection-uncountables
                                                 (append (quote ,rest) inflection-uncountables)))))))
 
-(defmacro string=~ (regex string &rest body)
+(defmacro inflection--string=~ (regex string &rest body)
   "Regex matching similar to the =~ operator found in other languages."
   (let ((str (gensym)))
     `(let ((,str ,string))
@@ -130,24 +130,32 @@
   (:uncountable "equipment" "information" "rice" "money" "species" "series" "fish" "sheep" "news"))
 
 ;;;###autoload
-(defun singularize-string (str)
+(defun inflection-singularize-string (str)
+  "Return the singularized version of STR."
   (when (stringp str)
     (or (car (member str inflection-uncountables))
         (caar (member* (downcase str) inflection-irregulars :key 'cadr :test 'equal))
         (cl-loop for (from to) in inflection-singulars
-                 for singular = (string=~ from str (sub to))
+                 for singular = (inflection--string=~ from str (sub to))
                  when singular do (return singular))
         str)))
 
 ;;;###autoload
-(defun pluralize-string (str)
+(define-obsolete-function-alias 'singularize-string 'inflection-singularize-string)
+
+;;;###autoload
+(defun inflection-pluralize-string (str)
+  "Return the pluralized version of STR."
   (when (stringp str)
     (or (car (member str inflection-uncountables))
         (cadar (member* (downcase str) inflection-irregulars :key 'car :test 'equal))
         (cl-loop for (from to) in inflection-plurals
-                 for plurals = (string=~ from str (sub to))
+                 for plurals = (inflection--string=~ from str (sub to))
                  when plurals do (return plurals))
         str)))
+
+;;;###autoload
+(define-obsolete-function-alias 'pluralize-string 'inflection-pluralize-string)
 
 (provide 'inflections)
 ;;; inflections.el ends here
