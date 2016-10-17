@@ -53,7 +53,7 @@
          (symbol-macrolet ,(loop for i to 9 collect
                                  (let ((sym (intern (concat "$" (number-to-string i)))))
                                    `(,sym (match-string ,i ,str))))
-           (flet (($ (i) (match-string i ,str))
+           (cl-flet (($ (i) (match-string i ,str))
                   (sub (replacement &optional (i 0) &key fixedcase literal-string)
                        (replace-match replacement fixedcase literal-string ,str i)))
              (symbol-macrolet ( ;;before
