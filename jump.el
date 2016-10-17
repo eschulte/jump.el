@@ -3,7 +3,7 @@
 ;; Copyright (C) 2008 Eric Schulte
 
 ;; Author: Eric Schulte
-;; URL: http://github.com/eschulte/jump.el/tree/master
+;; URL: http://github.com/eschulte/jump.el
 ;; Created: 2008-08-21
 ;; Keywords: project, convenience, navigation
 ;; Package-Requires: ((findr "0.7") (inflections "2.4"))
