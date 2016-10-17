@@ -38,7 +38,7 @@
 (defmacro define-inflectors (&rest specs)
   (cons 'progn
         (cl-loop for (type . rest) in specs
-                 collect (case type
+                 collect (cl-case type
                            (:singular `(push (quote ,rest) inflection-singulars))
                            (:plural `(push (quote ,rest) inflection-plurals))
                            (:irregular `(push (quote ,rest) inflection-irregulars))
